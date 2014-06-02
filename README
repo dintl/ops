@@ -1,0 +1,123 @@
+
+------------------------- INITIAL SERVER SETUP -----------------------
+#Scripts developed and tested on ubuntu 14.04 lts
+sudo apt-get install git make
+git clone https://github.com/gstream/ops.git ~/ops
+cd ~/ops
+./setup-server.sh
+make psql-create
+#upload a gzipped db dump using scp from your local PSQL_DUMP_FILE should be set to the path of that file
+make psql-import PSQL_DUMP_FILE=gstream.dump.2014_05_27.sql.gz
+#upload a gzipped copy of all of the media from phase 1 server (from directory /opt/apps/gstream/media)
+#unzip the media to /opt/data/web/media on the new server
+make deploy
+./manage.sh rebuild_equation_index
+#Open http://localhost:8080/ in your browser if using the Vagrantfile
+#otherwise nginx should be available under port 80 as usual
+
+
+
+------------------------ SETUP A DEV ENVIRONMENT ---------------------
+#Follow the initial server setup instructions first and get your github keys setup
+mkdir -p ~/ops/dev
+cd ~/ops/dev
+git clone git@github.com:dintl/g-streaming.git ~/ops/dev/gstream
+sudo apt-get install -y libjpeg62-dev zlib1g-dev libfreetype6-dev liblcms1-dev graphviz graphviz-dev pkg-config ipython-notebook 
+sudo apt-get install -y libpq-dev python-dev virtualenvwrapper
+echo "source /etc/bash_completion.d/virtualenvwrapper" >> ~/.bashrc
+source ~/.bashrc
+mkvirtualenv gstream
+
+
+ACTIVATE + UPDATE DEV ENV
+workon gstream
+cd ~/ops/dev/gstream
+git pull
+pip install -r server/requirements.core.txt
+
+
+RUN DEVELOPMENT SERVER
+workon gstream
+cd ~/ops/dev/gstream
+#If you do not have a db yet:
+# make psql-create
+# ./manage.py syncdb
+./manage.py runserver 0.0.0.0:8083
+#Open http://localhost:8083/ in your browser
+
+
+GRAPH OUT MODELS
+workon gstream
+cd ~/ops/dev/gstream
+./manage.py graph_models allometric_equations locations taxonomy common -x modified,created -o data_models.png
+
+
+BUILD NEW DOCKER IMAGE FOR DEPLOY
+#Take the last commit sha and push it to origin deploy
+cd ~/ops/dev/gstream
+git log -n 1
+#commit 634b33efd02a2e251a6cd4555d75f694374b9942
+#Author: Thomas Gruner <tom.gruner@gmail.com>
+#Date:   Wed May 28 19:40:49 2014 -0700
+git push origin 634b33efd02a2e251a6cd4555d75f694374b9942:deploy
+
+#Wait for trusted build to complete at https://index.docker.io/u/tomgruner/gstream/builds_history/20088/
+
+
+BUILD A DOCKER IMAGE LOCALLY AND DEPLOY IT
+cd ~/ops/dev/gstream
+make build
+#Removing intermediate container c4a4b8124806
+#Successfully built 119fcf7c8326
+make push
+cd ~/ops
+make deploy-image-id IMAGE_ID=119fcf7c8326
+
+
+DEPLOY A SPECIFIC IMAGE ID ON THE SERVER
+make deploy-image-id IMAGE_ID=119fcf7c8326
+
+
+------------------------- LOGGING --------------------------
+
+Supervisord logs
+/var/log/supervisord.log
+/var/log/supervisor/webgunicorn-stderr....
+/var/log/supervisor/webgunicorn-stdout....
+/var/log/elasticsearch-stderr...
+/var/log/elasticsearch-stdout...
+
+Nginx logs
+/var/log/nginx/access.log
+/var/log/nginx/error.log
+
+Django and Gunicorn Logs
+/opt/logs/web/django.log
+/opt/logs/web/gunicorn.log
+
+------------------------ UPDGRADE FROM PHASE 1 DB TO PHASE 2 DB -----------------------------
+
+./manage.py dbshell
+SELECT * INTO linkbox_linkbox FROM cmsplugin_linkbox;
+DROP table cmsplugin_linkbox;
+
+#Migrate the CMS
+./manage.py syncdb
+./manage.py migrate djangocms_text_ckeditor 0001 --fake --delete-ghost-migrations
+./manage.py migrate --noinput --all
+
+-- Go to admin --
+/admin/cms/page/
+Publish the home page
+Publish all the other pages
+
+-- Edit homepage --
+Change the allometric equation database box link
+
+-- Edit database page --
+Remove the geomap
+Edit the link for the Equations box to be /allometric-equations/search/
+Edit the link for the submit equations box to be /allometric-equations/submit
+
+
+
