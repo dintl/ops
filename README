@@ -23,7 +23,7 @@ mkdir -p ~/ops/dev
 cd ~/ops/dev
 git clone git@github.com:dintl/g-streaming.git ~/ops/dev/gstream
 sudo apt-get install -y libjpeg62-dev zlib1g-dev libfreetype6-dev liblcms1-dev graphviz graphviz-dev pkg-config ipython-notebook 
-sudo apt-get install -y libpq-dev python-dev virtualenvwrapper
+sudo apt-get install -y libpq-dev python-dev libxml2-dev python-lxml libxslt1-dev  virtualenvwrapper
 echo "source /etc/bash_completion.d/virtualenvwrapper" >> ~/.bashrc
 source ~/.bashrc
 mkvirtualenv gstream
@@ -34,6 +34,7 @@ workon gstream
 cd ~/ops/dev/gstream
 git pull
 pip install -r server/requirements.core.txt
+pip install -r server/requirements.cms.txt 
 
 
 RUN DEVELOPMENT SERVER
@@ -41,7 +42,8 @@ workon gstream
 cd ~/ops/dev/gstream
 #If you do not have a db yet:
 # make psql-create
-# ./manage.py syncdb
+# ./manage.py syncdb --all
+# ./manage.py migrate --fake
 ./manage.py runserver 0.0.0.0:8083
 #Open http://localhost:8083/ in your browser
 
