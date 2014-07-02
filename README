@@ -2,9 +2,9 @@
 ------------------------- INITIAL SERVER SETUP -----------------------
 #Scripts developed and tested on ubuntu 14.04 lts
 sudo apt-get install git make
-git clone https://github.com/gstream/ops.git ~/ops
+git clone https://github.com/dintl/ops.git ~/ops
 cd ~/ops
-./setup-server.sh
+./setup_server.sh
 make psql-create
 #upload a gzipped db dump using scp from your local PSQL_DUMP_FILE should be set to the path of that file
 make psql-import PSQL_DUMP_FILE=gstream.dump.2014_05_27.sql.gz
