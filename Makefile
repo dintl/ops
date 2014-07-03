@@ -15,10 +15,10 @@ deploy-image-id: set-latest stop-web psql-dump collectstatic migrate start-web
 #the image id with the tag "latest" is the one that will be run
 #make set-latest IMAGE_ID=8852ac715366
 set-latest:
-	docker tag ${IMAGE_ID} tomgruner/gstream:latest 
+	docker tag ${IMAGE_ID} tomgruner/g-streaming:latest 
 
 pull-docker-images:
-	sudo docker pull tomgruner/gstream
+	sudo docker pull tomgruner/g-streaming
 
 collectstatic:
 	#Collect static and migrate with the new container

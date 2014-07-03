@@ -9,7 +9,6 @@
 sudo docker run -i -t \
 	-v /opt/data/web:/opt/data/web \
 	-v /opt/logs/web:/opt/logs/web \
-	-p 8083:8083 \
 	--net="host" \
-	tomgruner/gstream:latest \
+	tomgruner/g-streaming:latest \
 	/opt/code/manage.py "$@"
